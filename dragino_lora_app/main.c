@@ -146,10 +146,17 @@ typedef bool boolean;
 typedef unsigned char byte;
 
 static const int CHANNEL = 0;
+union{
+	char message[256];
+	struct{
+		char		prefix[4];
+		uint16_t	fuelLevelReading;
+	}measuredData;
+}dataBuffer;
 
-char message[256];
+byte hello[32] = "HELLO";
 
-bool sx1272 = true;
+bool sx1272 = true; //The LoRa chip
 
 byte receivedbytes;
 
@@ -172,8 +179,6 @@ sf_t sf = SF7;
 // Set center frequency
 //uint32_t  freq = 868100000; // in Mhz! (868.1)
 uint32_t  freq = 915000000; // in Mhz! (915)
-
-byte hello[32] = "HELLO";
 
 void die(const char *s)
 {
@@ -275,28 +280,6 @@ void SetupLoRa()
 	writeReg(REG_MODEM_CONFIG2, 0x74); 
 	writeReg(REG_MODEM_CONFIG3, 0x04); 
 
-/*     if (sx1272) {
-        if (sf == SF11 || sf == SF12) {
-            writeReg(REG_MODEM_CONFIG,0x0B);
-        } else {
-            writeReg(REG_MODEM_CONFIG,0x0A);
-        }
-        writeReg(REG_MODEM_CONFIG2,(sf<<4) | 0x04);
-    } else {
-        if (sf == SF11 || sf == SF12) {
-            writeReg(REG_MODEM_CONFIG3,0x0C);
-        } else {
-            writeReg(REG_MODEM_CONFIG3,0x04);
-        }
-        writeReg(REG_MODEM_CONFIG,0x72);
-        writeReg(REG_MODEM_CONFIG2,(sf<<4) | 0x04);
-    }
-
-    if (sf == SF10 || sf == SF11 || sf == SF12) {
-        writeReg(REG_SYMB_TIMEOUT_LSB,0x05);
-    } else {
-        writeReg(REG_SYMB_TIMEOUT_LSB,0x08);
-    } */
 	
     writeReg(REG_MAX_PAYLOAD_LENGTH,0x80);
     writeReg(REG_PAYLOAD_LENGTH,PAYLOAD_LENGTH);
@@ -341,10 +324,11 @@ void receivepacket()
 
     long int SNR;
     int rssicorr;
+	char snum[20]; //STRING TO HOLD COVERSIONS
 
     if(digitalRead(dio0) == 1)
     {
-        if(receive(message)) {
+        if(receive(dataBuffer.message)) {
             byte value = readReg(REG_PKT_SNR_VALUE);
             if( value & 0x80 ) // The SNR sign bit is 1
             {
@@ -368,7 +352,11 @@ void receivepacket()
             printf("SNR: %li, ", SNR);
             printf("Length: %i", (int)receivedbytes);
             printf("\n");
-            printf("Payload: %s\n", message+4);//TODO: This is a kluge - first four chars are nonsense
+			//convert integer value to character
+			sprintf(snum, "%d", dataBuffer.measuredData.fuelLevelReading);
+			//itoa(dataBuffer.measuredData.fuelLevelReading, snum, 10);
+			
+            printf("Payload: %s\n", snum);//TODO: This is a kluge - first four chars are nonsense
 
         } // received a message
     } // dio0=1
@@ -470,7 +458,7 @@ int main (int argc, char *argv[])
             txlora(hello, strlen((char *)hello));
             delay(5000);
         }
-    } else {
+    } else { //receiver
 
         // radio init
         opmodeLora();
@@ -479,7 +467,7 @@ int main (int argc, char *argv[])
         printf("Listening at SF%i on %.6lf Mhz.\n", sf,(double)freq/1000000);
         printf("------------------\n");
         while(1) {
-            receivepacket(); 
+            receivepacket();
             delay(1);
         }
 
