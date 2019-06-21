@@ -146,7 +146,7 @@ typedef bool boolean;
 typedef unsigned char byte;
 
 static const int CHANNEL = 0;
-union{
+union{ // read http://www.catb.org/esr/structure-packing/  if you want to make shanges to this structure
 	char message[256];
 	struct{
 		char		prefix[4]; //uses 4 bytes
