@@ -149,8 +149,8 @@ static const int CHANNEL = 0;
 union{
 	char message[256];
 	struct{
-		char		prefix[4];
-		uint16_t	fuelLevelReading;
+		char		prefix[4]; //uses 4 bytes
+		uint16_t	fuelLevelReading; //uses 2 bytes
 	}measuredData;
 }dataBuffer;
 
