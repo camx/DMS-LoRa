@@ -11,8 +11,8 @@
 // Singleton instance of the radio driver
 RH_RF95 rf95;
 #define FUELGAUGE PIN_A0
-#define BATTERY PIN_A1
-#define FUELGAUGE_SUPPLY PIN_A3 //Not sure we neeed this - check whether the supply is decent.
+//#define BATTERY PIN_A1
+//#define FUELGAUGE_SUPPLY PIN_A3 //Not sure we neeed this - check whether the supply is decent.
 
 struct { //this structure has to be padded to size of largest data type.
   unsigned int fuelLevelReading;
