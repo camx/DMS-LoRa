@@ -385,11 +385,12 @@ void receivepacket()
             //convert fuel measure to percentage
             float fuelLevel = FuelLevel(dataBuffer.measuredData.fuelLevelReading);
             
-			//convert integer value to character
-			sprintf(snum, "%f", fuelLevel);
+			//convert float to character
+            gcvt(fuelLevel, 3, snum)
+//			sprintf(snum, "%f", fuelLevel);
 			//itoa(dataBuffer.measuredData.fuelLevelReading, snum, 10);
 			
-            printf("Payload: %s\n", snum);//TODO: This is a kluge - first four chars are nonsense
+            printf("Payload: %s\n", snum);
 
         } // received a message
     } // dio0=1
