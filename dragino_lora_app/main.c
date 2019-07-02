@@ -352,8 +352,12 @@ void receivepacket()
             printf("SNR: %li, ", SNR);
             printf("Length: %i", (int)receivedbytes);
             printf("\n");
+            
+            //convert fuel measure to percentage
+            float fuelLevel = FuelLevel(dataBuffer.measuredData.fuelLevelReading);
+            
 			//convert integer value to character
-			sprintf(snum, "%d", dataBuffer.measuredData.fuelLevelReading);
+			sprintf(snum, "%f", fuelLevel);
 			//itoa(dataBuffer.measuredData.fuelLevelReading, snum, 10);
 			
             printf("Payload: %s\n", snum);//TODO: This is a kluge - first four chars are nonsense
@@ -420,6 +424,35 @@ void txlora(byte *frame, byte datalen)
     opmode(OPMODE_TX);
 
     printf("send: %s\n", frame);
+}
+float FuelLevel(int sensVal)
+{
+/* 	Piecewise linearization of fuel sensor reading (ref spreadsheet for calculation)
+	M           C             Threshold
+	-----------------------------------
+	55.9678	    -10.0987  
+	72.2230	    -31.3314      1.235
+	30.2275	    3.9530        0.841
+
+ */
+    //Check voltage is within range
+    
+	//convert sens val to float
+	float sens = sensVal/1024.0; //2^10
+	float perc;
+	if sens< 0.841
+	{
+		perc = sens*30.2275 + 3.9530;
+	}
+	else if sense < 1.235
+	{
+		perc = sense*(72.2230) - 31.3314;
+	}
+	else
+	{
+		perc = sense*55.9678 - 10.0987;
+	}
+	return perc;
 }
 
 int main (int argc, char *argv[]) 
