@@ -387,6 +387,7 @@ void receivepacket()
             
 			//convert float to character
             gcvt(fuelLevel, 3, snum)
+            printf("%d", snum)
 //			sprintf(snum, "%f", fuelLevel);
 			//itoa(dataBuffer.measuredData.fuelLevelReading, snum, 10);
 			
