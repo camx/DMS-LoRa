@@ -23,6 +23,7 @@ float avgMeasure = 0;
 float expWt = 0.6;
 bool initEntry = true;
 int filteredVal;
+int valRec = 1;
 
 #define NAVG 10 //the number averaged over
 int ExponentialFilter(int newVal)
@@ -42,7 +43,7 @@ void setup()
   while (!Serial) ; // Wait for serial port to be available
   if (!rf95.init())
     Serial.println("init failed");
-  else  Serial.println("Sending to rf95_server");
+  else  Serial.println("Sending to rf95_client");
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
   // The default transmitter power is 13dBm, using PA_BOOST.
@@ -60,22 +61,17 @@ void loop()
 {
   int newVal;
   newVal = analogRead(FUELGAUGE);
-  filteredVal = ExponentialFilter(newVal);
-  delay(1); //delay 1 ms
-  measuredData.fuelLevelReading = filteredVal; //ten bit integer (16 bits)
-  rf95.send((char *) &measuredData, sizeof(measuredData));
-  char snum[22];
-  //https://stackoverflow.com/questions/27651012/arduino-sprintf-float-not-formatting
-  dtostrf(filteredVal * 3.33 / 1023, 4, 2, snum);
-  sprintf(snum, "%s Volts", snum);
-  //  sprintf(snum, sizeof(snum), "%f", avgMeasure);
-  Serial.println(snum);
-  //  itoa(sizeof(measuredData), snum, 10);
-  //  Serial.print("Sent ");
-  //  Serial.print(snum);
-  //  Serial.println(" bytes of data");
-
-
-  rf95.waitPacketSent();
+  filteredVal = newVal;//ExponentialFilter(newVal);
+  if (((float)(abs(valRec - filteredVal))/((float)filteredVal)) > 0.03) { //if the change is greater than 3%
+    valRec = newVal;
+    measuredData.fuelLevelReading = filteredVal; //ten bit integer (16 bits)
+    rf95.send((char *) &measuredData, sizeof(measuredData));
+    char snum[22];
+    dtostrf(filteredVal * 3.33 / 1023, 4, 2, snum); //https://stackoverflow.com/questions/27651012/arduino-sprintf-float-not-formatting
+    sprintf(snum, "%s Volts", snum);
+    //  sprintf(snum, sizeof(snum), "%f", avgMeasure);
+    Serial.println(snum);
+    rf95.waitPacketSent();
+  }
   delay(2000);
 }
