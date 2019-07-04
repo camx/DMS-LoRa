@@ -16,7 +16,7 @@ RH_RF95 rf95;
 
 int testVal;
 char snum[22];
-
+char excess[5];
 struct { //this structure has to be padded to size of largest data type.
   unsigned int fuelLevelReading;
 } measuredData;
@@ -36,6 +36,8 @@ void loop()
   if (Serial.available())
   {
     testVal = Serial.parseInt();
+    Serial.println(testVal);
+    while (Serial.read() != '\n') continue;
     measuredData.fuelLevelReading = testVal; //ten bit integer (16 bits)
     rf95.send((char *) &measuredData, sizeof(measuredData));
     dtostrf(testVal * 3.33 / 1023, 4, 2, snum); //https://stackoverflow.com/questions/27651012/arduino-sprintf-float-not-formatting
