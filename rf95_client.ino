@@ -14,60 +14,31 @@ RH_RF95 rf95;
 #define BATTERY PIN_A1
 #define FUELGAUGE_SUPPLY PIN_A3 //Not sure we neeed this - check whether the supply is decent.
 
-int ExponentialFilter(int);
+int testVal;
+char snum[22];
 
 struct { //this structure has to be padded to size of largest data type.
   unsigned int fuelLevelReading;
 } measuredData;
-float avgMeasure = 0;
-float expWt = 0.6;
-bool initEntry = true;
-int filteredVal;
-int valRec = 1;
 
-#define NAVG 10 //the number averaged over
-int ExponentialFilter(int newVal)
-{
-  if (initEntry)
-  {
-    avgMeasure = newVal;
-    initEntry = false;
-  }
-  avgMeasure = newVal * expWt + (1 - expWt) * avgMeasure;
-  return (int)avgMeasure;
-}
 void setup()
 {
-  analogReference(EXTERNAL);
+  analogReference(EXTERNAL);//conect reference voltage to AREF
   Serial.begin(9600);
   while (!Serial) ; // Wait for serial port to be available
   if (!rf95.init())
     Serial.println("init failed");
   else  Serial.println("Sending to rf95_client");
-  // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-
-  // The default transmitter power is 13dBm, using PA_BOOST.
-  // If you are using RFM95/96/97/98 modules which uses the PA_BOOST transmitter pin, then
-  // you can set transmitter powers from 5 to 23 dBm:
-  //  driver.setTxPower(23, false);
-  // If you are using Modtronix inAir4 or inAir9,or any other module which uses the
-  // transmitter RFO pins and not the PA_BOOST pins
-  // then you can configure the power transmitter power for -1 to 14 dBm and with useRFO true.
-  // Failure to do that will result in extremely low transmit powers.
-  //  driver.setTxPower(14, true);
 }
 
 void loop()
 {
-  int newVal;
-  newVal = analogRead(FUELGAUGE);
-  filteredVal = newVal;//ExponentialFilter(newVal);
-  if (((float)(abs(valRec - filteredVal))/((float)filteredVal)) > 0.03) { //if the change is greater than 3%
-    valRec = newVal;
-    measuredData.fuelLevelReading = filteredVal; //ten bit integer (16 bits)
+  if (Serial.available())
+  {
+    testVal = Serial.parseInt();
+    measuredData.fuelLevelReading = testVal; //ten bit integer (16 bits)
     rf95.send((char *) &measuredData, sizeof(measuredData));
-    char snum[22];
-    dtostrf(filteredVal * 3.33 / 1023, 4, 2, snum); //https://stackoverflow.com/questions/27651012/arduino-sprintf-float-not-formatting
+    dtostrf(testVal * 3.33 / 1023, 4, 2, snum); //https://stackoverflow.com/questions/27651012/arduino-sprintf-float-not-formatting
     sprintf(snum, "%s Volts", snum);
     //  sprintf(snum, sizeof(snum), "%f", avgMeasure);
     Serial.println(snum);
